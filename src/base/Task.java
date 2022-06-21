@@ -72,6 +72,9 @@ public class Task {
         this.taskType = taskType;
     }
 
+    public Task() {
+    }
+
     //Получение имени задачи
     public String getName() {
         return name;

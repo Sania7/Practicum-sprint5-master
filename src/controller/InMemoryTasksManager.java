@@ -102,10 +102,13 @@ public class InMemoryTasksManager implements TaskManager {
             System.out.println("Задача с номером #" + newTask.getNum() + " уже существует!");
             return;
         }
+        if (newTask instanceof SubTask) {
+            SubTask subTask = (SubTask) newTask;
+            checkTime(subTask);
+            sortedTaskSet.add(subTask);
+        }
         // Отсутствует добавление в отсортированный по времени список, в этот список добавляют только подзадачи и задачи
         //Если номер задачи не задан вручную - сгенерировать его автоматически
-        checkTime(newTask);
-        sortedTaskSet.add(newTask);
         if (newTask.getNum() == null) {
             newTask.setNum(calcNewNum());
         }
@@ -115,8 +118,8 @@ public class InMemoryTasksManager implements TaskManager {
             ((SubTask) newTask).getEpic().getStatus(); // обновить статус Эпика
         }
     }
-    //Обновление задачи любого типа по идентификатору. Новая версия объекта передаётся в виде параметра.
 
+    //Обновление задачи любого типа по идентификатору. Новая версия объекта передаётся в виде параметра.
     //Отсутствует обновление и валидация перед обновлением задачи
     // в отсортированном списке
     @Override
@@ -124,8 +127,13 @@ public class InMemoryTasksManager implements TaskManager {
 
         Task oldTask = getTask(newTask.getNum());       //Получение изменяемой задачи по идентификатору новой
         taskLists.put(newTask.getNum(), newTask);        //Вставить задачу в список менеджера
-        checkTime(newTask);
+        //валидация времени должна происходить только для подзадачи
+        // и задачи, далее следует удалить старую
+        // версию из отсортированного списка и поместить в него новую
+
         if (newTask.getClass() != oldTask.getClass()) {
+            checkTime(newTask);
+            sortedTaskSet.add(newTask);
             System.out.println("Не совпал тип обновляемой задачи(" + oldTask.getClass()
                     + ") с типом задачи для обновления (" + newTask.getClass() + ")!");
             return;
@@ -139,6 +147,8 @@ public class InMemoryTasksManager implements TaskManager {
             }
         } else if (newTask instanceof SubTask) { //Обновление для Подзадачи
             SubTask subTask = (SubTask)newTask;
+            checkTime(subTask);
+            sortedTaskSet.add(subTask);
             subTask.setEpic(((SubTask)oldTask).getEpic());          //Подключить к старому Эпику
             subTask.getEpic().getSubTasks().add(subTask);           //Добавить новую версию к Эпику
             subTask.getEpic().getSubTasks().remove(oldTask);        //Удалить из Эпика старую версию
@@ -164,7 +174,7 @@ public class InMemoryTasksManager implements TaskManager {
                 for (SubTask subTask : ((Epic) delTask).getSubTasks()) {
                     taskLists.remove(subTask.getNum());
                     historyManager.remove(subTask.getNum());
-
+                    sortedTaskSet.remove(subTask); // удалить подзадачу из отсортированного списка
                 }
             }
             taskLists.remove(num);

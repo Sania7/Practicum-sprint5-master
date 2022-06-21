@@ -25,6 +25,9 @@ public class SubTask extends Task {
         super(name,details,TaskType.SUBTASK,startTime,duration);
     }
 
+    public SubTask() {
+    }
+
     //Получение Эпика
     public Epic getEpic() {
         return epic;

@@ -1,5 +1,6 @@
 package base;
 
+import com.google.gson.annotations.SerializedName;
 import util.TaskStatus;
 import util.TaskType;
 
@@ -7,16 +8,21 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class Task {
-    private String name;        //Название
-    private String details;     //Описание/дополнение
-    private Integer num;        //Уникальный идентификационный номер задачи
-    private TaskStatus status;  //Статус задачи
-    private TaskType taskType;//Тмп задачи
 
-    protected LocalDateTime startTime; // дата начала
+    @SerializedName("id")
+    private Integer num;                //Уникальный идентификационный номер задачи
 
-    protected Duration duration; // продолжительность
+    @SerializedName("type")
+    private TaskType taskType;          //Тип задачи
+    private TaskStatus status;          //Статус задачи
+    private String name;                //Название
 
+    @SerializedName("description")
+    private String details;             //Описание/дополнение
+
+    @SerializedName("start")
+    protected LocalDateTime startTime;  //Дата начала
+    protected Duration duration;        //Продолжительность
 
     //Конструктор класса
     public Task(Integer num, String name, String details) {
@@ -24,7 +30,15 @@ public class Task {
         this.name = name;
         this.details = details;
         status = TaskStatus.NEW;
-        this.taskType = TaskType.TASK;
+        taskType = TaskType.TASK;
+    }
+
+    //Конструктор класса
+    public Task(String name, String details) {
+        this.name = name;
+        this.details = details;
+        status = TaskStatus.NEW;
+        taskType = TaskType.TASK;
     }
 
     //Конструктор класса
@@ -37,7 +51,37 @@ public class Task {
     }
 
     //Конструктор
-    public Task(String name, String details, TaskType taskType,LocalDateTime startTime, Duration duration) {
+    public Task(String name, String details, TaskType taskType) {
+        this.name = name;
+        this.details = details;
+        status = TaskStatus.NEW;
+        this.taskType = taskType;
+    }
+
+    //Конструктор класса
+    public Task(Integer num, String name, String details, LocalDateTime startTime, Duration duration) {
+        this.num = num;
+        this.name = name;
+        this.details = details;
+        status = TaskStatus.NEW;
+        taskType = TaskType.TASK;
+        this.startTime = startTime;
+        this.duration = duration;
+    }
+
+    //Конструктор класса
+    public Task(String name, String details, LocalDateTime startTime, Duration duration) {
+        this.name = name;
+        this.details = details;
+        status = TaskStatus.NEW;
+        taskType = TaskType.TASK;
+        this.startTime = startTime;
+        this.duration = duration;
+    }
+
+    //Конструктор класса
+    public Task(Integer num, String name, String details, TaskType taskType, LocalDateTime startTime, Duration duration) {
+        this.num = num;
         this.name = name;
         this.details = details;
         status = TaskStatus.NEW;
@@ -46,33 +90,14 @@ public class Task {
         this.duration = duration;
     }
 
-    public Task(Integer num, String details, String name, LocalDateTime startTime, Duration duration) {
-        this.num = num;
-        this.details = details;
+    //Конструктор
+    public Task(String name, String details, TaskType taskType, LocalDateTime startTime, Duration duration) {
         this.name = name;
+        this.details = details;
+        status = TaskStatus.NEW;
+        this.taskType = taskType;
         this.startTime = startTime;
         this.duration = duration;
-
-    }
-
-    public Task(int num, String name, String details) {
-        this.num = num;
-        this.name = name;
-        this.details = details;
-    }
-
-    public Task(String name, String details) {
-        this.name = name;
-        this.details = details;
-    }
-
-    public Task(String name, String details, TaskType taskType) {
-        this.name = name;
-        this.details = details;
-        this.taskType = taskType;
-    }
-
-    public Task() {
     }
 
     //Получение имени задачи
@@ -84,6 +109,7 @@ public class Task {
     public void setName(String name) {
         this.name = name;
     }
+
     //Получение описания
     public String getDetails() {
         return details;
@@ -113,59 +139,49 @@ public class Task {
     public void setStatus(TaskStatus status) {
         this.status = status;
     }
+
     //Получение типа задачи
     public TaskType getType(){
         return taskType;
     }
 
-    public TaskType getTaskType() {
-        return taskType;
-    }
-
-    public void setTaskType(TaskType taskType) {
-        this.taskType = taskType;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
-
+    //Получение длительности выполнения задачи
     public Duration getDuration() {
         return duration;
     }
 
+    //Задание длительности выполнения задачи
     public void setDuration(Duration duration) {
         this.duration = duration;
     }
 
-    // вычисление времени выполнения задачи
+    //Получение даты начала выполнения задачи
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    //Задание даты начала выполнения задачи
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    //Вычисление времени окончания задачи
     public LocalDateTime getEndTime() {
-        if (startTime != null && duration != null) {
-            return startTime.plusSeconds(duration.getSeconds());
-        } else {
+        if (startTime != null && duration != null)
+            return startTime.plusSeconds(duration.toSeconds());
+        else
             return null;
-        }
     }
 
     //Отображение задачи
     @Override
     public String toString() {
-        return getNum()
-                + ","
-                + getType()
-                + ","
-                + getName()
-                + ","
-                + getStatus()
-                + ","
-                + getDetails()
-                + ","
-                + getStartTime()
-                + ","
-                + (getDuration() == Duration.ZERO ? "" : getDuration());
+        return getNum() + "," +
+                getType() + "," +
+                getName() + "," +
+                getStatus() + "," +
+                getDetails()  + ",," +
+                getStartTime() + "," +
+                (getDuration() == Duration.ZERO ? "" : getDuration());
     }
 }

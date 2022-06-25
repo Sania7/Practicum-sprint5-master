@@ -1,4 +1,4 @@
-package controller;
+package managers;
 
 import base.*;
 import exception.ManagerSaveException;
@@ -11,25 +11,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FileBackedTasksManager extends InMemoryTasksManager {
+
+
     private Path saveFile;
 
-    public static final String FILE_HEADER = "ID,TYPE,NAME,STATUS,DESCRIPTION,EPIC";
     //Конструктор класса
     public FileBackedTasksManager(String saveFile){
         super();
         this.saveFile = Paths.get(saveFile);
     }
 
-    public FileBackedTasksManager() {
-    }
-
     //Метод для проверки работы менеджера
     public static void main(String[] args){
-
         FileBackedTasksManager manager  = new FileBackedTasksManager("save_tasks.txt");
         FileBackedTasksManager manager1 = new FileBackedTasksManager("save_tasks.txt");    //Менеджер для проверки загрузки из файла
 
@@ -38,28 +37,30 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
         SubTask subTask;
 
         //Заведение нескольких разных задач, эпиков и подзадач.
-        task = new Task(101,"План № 1", "Пояснение к плану № 1");
+        //Формирование двух отдельных Задач
+        task = new Task(100,"Задача 1", "Пояснение к задаче 1");
         manager.addTask(task);
 
-        task = new Task(102,"План № 2", "Пояснение к плану № 2");
+        task = new Task(110,"Задача 2", "Пояснение к задаче 2");
         task.setStatus(TaskStatus.IN_PROGRESS);
         manager.addTask(task);
 
-        //Создание первого Эпика с тремя подзадачами
-        epic = new Epic(200,"Отпуск", "Телефон туроператора: +777 77 721");
+        //Формирование первого Эпика с тремя подзадачами
+        epic = new Epic(200,"Переезд", "Телефон перевозчика: +123 456 78 90");
         manager.addTask(epic);
+
         //Подзадачи к первому Эпику
-        subTask = new SubTask("Собрать вещи в отпуск", "Чемоданы в гардеробе", epic);
+        subTask = new SubTask("Собрать коробки", "Коробки на чердаке", epic);
         manager.addTask(subTask);
 
-        subTask = new SubTask("Купить одежду на пляж", "Пляжная одежда с интернет магазина", epic);
+        subTask = new SubTask("Упаковать кошку", "Переноска за дверью", epic);
         manager.addTask(subTask);
 
-        subTask = new SubTask("Сказать всем пока на месяц", "Предупредить маму" , epic);
+        subTask = new SubTask("Сказать слова прощания", "Можно на английском", epic);
         manager.addTask(subTask);
 
-        //Создание втрого Эпика (без подзадач)
-        epic = new Epic(300,"Эпик 2, после отпуска", "Без задач");
+        //Формирование втрого Эпика (без подзадач)
+        epic = new Epic(300,"Эпик 2", "Эпик без подзадач");
         manager.addTask(epic);
 
         //Вывод списка задач
@@ -68,14 +69,15 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
             System.out.println(taskFor);
 
         //Запрос некоторых задач, чтобы заполнилась история просмотра.
-        System.out.println("\n----------Просмотр задач (200, 1, 102, 300, 101):");
+        System.out.println("\n----------Обращение к задачам (200, 1, 110, 300, 100):");
         task = manager.getTask(200);
         task = manager.getTask(1);
-        task = manager.getTask(102);
+        task = manager.getTask(110);
         task = manager.getTask(300);
-        task = manager.getTask(101);
+        task = manager.getTask(100);
+
         //Просмотр истории обращения к задачам
-        System.out.println("\nСписок просмотров задач:");
+        System.out.println("\nСписок обращений к задачам:");
         for (Task taskFor : manager.history())
             System.out.println(taskFor);
 
@@ -100,11 +102,12 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
         List<String> lines = new ArrayList<>();
 
         //Подготовка данных
-        lines.add(FILE_HEADER);
-        for(Task task : super.taskLists.values()){
+        lines.add("ID,TYPE,NAME,STATUS,DESCRIPTION,EPIC,START_TIME,DURATION");
+        for(Task task : super.taskList.values()){
             lines.add(task.toString());
         }
-        lines.add("\n" + getHistoryManager().toString());
+
+        lines.add("\n" + history.toString());
 
         //Запись в файл
         try {
@@ -140,6 +143,7 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
         super.updateTask(newTask);
         save();
     }
+
     //Перегрузка метода для добавления записи изменений в файл
     @Override
     public void delTask(Integer num){
@@ -155,12 +159,13 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
         //Разбиение строки на поля
         String[] fields = str.split(",");
 
-        //Получение типа новой задачи
-        TaskType newType = TaskType.valueOf(fields[1]);
-
-        switch (newType){
+        switch (TaskType.valueOf(fields[1])){
             case TASK:
-                newTask = new Task(Integer.parseInt(fields[0]), fields[2], fields[4]);
+                newTask = new Task(Integer.parseInt(fields[0]),
+                        fields[2],
+                        fields[4],
+                        ("null".equals(fields[6]) ? null : LocalDateTime.parse(fields[6])),
+                        ("null".equals(fields[7]) ? null : Duration.parse(fields[7])));
                 break;
             case EPIC:
                 newTask = new Epic(Integer.parseInt(fields[0]), fields[2], fields[4]);
@@ -169,11 +174,14 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
                 newTask = new SubTask(Integer.parseInt(fields[0]),
                         fields[2],
                         fields[4],
-                        (Epic) super.getTask(Integer.parseInt(fields[5])));
+                        (Epic) super.getTask(Integer.parseInt(fields[5])),
+                        ("null".equals(fields[6]) ? null : LocalDateTime.parse(fields[6])),
+                        ("null".equals(fields[7]) ? null : Duration.parse(fields[7])));
         }
 
         return newTask;
     }
+
     //Загрузка списка задач из файла
     public static FileBackedTasksManager loadFromFile(Path file){
         FileBackedTasksManager fm = new FileBackedTasksManager(file.toString());
@@ -197,11 +205,10 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
         //Цикл по строкам из файла
         for (int i = 1; i < lines.size(); i++){     //В первой строке - заголовки
             if (lines.get(i).isEmpty()){            //После пустой строки - считвание истории
-                if (lines.size() > (i + 1)){
-
-                    fm.getHistoryManager().remove(i);             //Очистка истории перед её загрузкой
+                if (lines.size() > (i + 1) && !lines.get(i + 1).isEmpty()){
+                    fm.history.clear();             //Очистка истории перед её загрузкой
                     for(Integer num : InMemoryHistoryManager.fromString(lines.get(i + 1))){
-                        fm.getTask(num);     //Обращение к задаче
+                        fm.getTask(num);            //Обращение к задаче для формирования мстории
                     }
                 }
                 break;
@@ -209,6 +216,7 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
                 fm.addTask(fm.fromString(lines.get(i)));
             }
         }
+
         return fm;
     }
 }

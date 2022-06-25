@@ -3,7 +3,7 @@ package test;
 import base.Epic;
 import base.SubTask;
 import base.Task;
-import controller.TaskManager;
+import managers.TaskManager;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -14,36 +14,36 @@ import static org.junit.jupiter.api.Assertions.*;
 // класс тестирования менеджеров задач
 abstract class TaskManagerTest<T extends TaskManager> {
 
-    TaskManager taskManager;
+    TaskManager taskManager;    //Получение менеджера задач
     Task task;
     Epic epic;
     SubTask subTask1;
     SubTask subTask2;
 
-    // проверка получения списка всех задач, эпики, задачи, подзадачи.
+    //Проверка функции получения списка всех задач (Эпики + Задачи + Подзадачи).
     @Test
-    void getAllTasksListTest() {
-        // пустой список задач
-        assertDoesNotThrow(() -> taskManager.getAllTasksList(),
-                "получение пустого списка задач не должно поймать исключение!");
+    void getAllTasksList(){ //HashMap<Integer, Task> getAllTasksList();
+        //b. С пустым списком задач.
+        assertDoesNotThrow(()->taskManager.getAllTasksList(),
+                "Запрос пустого списка задач не должен вызывать исключений!");
 
-        task = new Task(101, "Задача 1", "Задача");
+        //a. Со стандартным поведением.
+        task = new Task(100,"Задача 1", "Задача для наполнения менеджера");
         taskManager.addTask(task);
-        assertEquals(1, taskManager.getAllTasksList().size(), "Не соответствует количество задач в менеджере!");
-
+        assertEquals(1, taskManager.getAllTasksList().size(), "Количество задач в менеджере не верно!");
     }
 
-    // проверка получения списка задач, эпики, задачи.
+    //Проверка функции получения списка задач (Эпики + Задачи).
     @Test
-    void getTasksListTask() {
-        // пустой список задач.
+    void getTasksList(){    //ArrayList<Task> getTasksList();
+        //b. С пустым списком задач.
         assertDoesNotThrow(()->taskManager.getTasksList(),
-                "получение пустого списка задач не должно поймать исключение!");
+                "Запрос пустого списка задач не должен вызывать исключений!");
 
-        // есть задача.
-        task = new Task(100,"Задача 1", "Задача для менеджера задач");
+        //a. Со стандартным поведением.
+        task = new Task(100,"Задача 1", "Задача для наполнения менеджера задач");
         taskManager.addTask(task);
-        assertEquals(1, taskManager.getTasksList().size(), "Не соответствует количество задач в менеджере!");
+        assertEquals(1, taskManager.getTasksList().size(), "Количество задач в менеджере не верно!");
     }
 
     //Проверка функции получения отсортированного списка всех задач
@@ -85,7 +85,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     //Проверка функции получения списка всех Эпиков.
     @Test
-    void getEpics() {    //ArrayList<Task> getEpics();
+    void getEpics(){    //ArrayList<Task> getEpics();
         //b. С пустым списком задач.
         assertDoesNotThrow(()->taskManager.getEpics(),
                 "Запрос пустого списка задач не должен вызывать исключений!");
@@ -98,7 +98,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     //Проверка функции получения списка всех подзадач определённого эпика.
     @Test
-    void getSubTasks() {    //ArrayList<SubTask> getSubTasks(Epic epic);
+    void getSubTasks(){    //ArrayList<SubTask> getSubTasks(Epic epic);
         //b. С пустым списком подзадач.
         epic = new Epic(200,"Переезд", "Телефон перевозчика: +123 456 78 90");
         taskManager.addTask(epic);
@@ -113,7 +113,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     //Проверка функции получения задачи по идентификатору.
     @Test
-    void getTask() {    //Task getTask(int num);
+    void getTask(){    //Task getTask(int num);
         //c. С неверным идентификатором задачи (пустой и/или несуществующий идентификатор).
         assertDoesNotThrow(()->taskManager.getTask(1),
                 "Запрос несуществующей задачи не должен вызывать исключений!");
@@ -127,7 +127,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     //Проверка функции добавления новой Задачи, Эпика и Подзадачи. Сам объект должен передаваться в качестве параметра.
     @Test
-    void addTask() {    //void addTask(Task newTask);
+    void addTask(){    //void addTask(Task newTask);
         //a. Со стандартным поведением.
         task = new Task(100,"Задача 1", "Задача для добавления");
         taskManager.addTask(task);
@@ -137,7 +137,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     //Проверка функции обновления задачи любого типа по идентификатору. Новая версия объекта передаётся в виде параметра.
     @Test
-    void updateTask() {    //void updateTask(Task newTask);
+    void updateTask(){    //void updateTask(Task newTask);
         //c. С неверным идентификатором задачи (пустой и/или несуществующий идентификатор).
         taskManager.updateTask(null);
         assertDoesNotThrow(()->taskManager.updateTask(null),
@@ -155,7 +155,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     //Проверка функции удаления ранее добавленных задач — всех и по идентификатору.
     @Test
-    void delTask() {    //void delTask(Integer num);
+    void delTask(){    //void delTask(Integer num);
         //b. С пустым списком задач.
         assertDoesNotThrow(()->taskManager.delTask(1),
                 "Попытка удаления несуществующей задачи не должна вызывать исключение!");
@@ -179,7 +179,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     //Проверка функции формирования идентификатора задачи
     @Test
-    void calcNewNum() {    //int calcNewNum();
+    void calcNewNum(){    //int calcNewNum();
         //b. С пустым списком задач.
         assertEquals(1, taskManager.calcNewNum(),
                 "Нумерация должна начинаться с 1!");
@@ -205,7 +205,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
     //Проверка функции получения просмотренных задачи.
     // (полученных через getTask(), изменённых updateTask() или удалённых delTask()).
     @Test
-    void history() {    //ArrayList<Task> history();
+    void history(){    //ArrayList<Task> history();
         //b. С пустым списком задач.
         assertDoesNotThrow(()->taskManager.history(),
                 "Запрос пустой истории обращений не должен вызывать исключений!");

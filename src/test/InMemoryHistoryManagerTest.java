@@ -1,7 +1,7 @@
 package test;
 
 import base.Task;
-import controller.InMemoryHistoryManager;
+import managers.InMemoryHistoryManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -69,7 +69,7 @@ public class InMemoryHistoryManagerTest {
         assertNotNull(histManager, "История не пустая!");
         assertEquals(0, histManager.getHistory().size(), "История должна быть пустой!");
 
-        task = new Task(100, "Задача 1", "Задача для проверки дублирования.");
+        task = new Task(100,"Задача 1", "Задача для проверки дублирования.");
 
         histManager.add(task);
         assertEquals(1, histManager.getHistory().size(), "В истории должна быть одна задача!");
@@ -79,16 +79,16 @@ public class InMemoryHistoryManagerTest {
         assertEquals(1, histManager.getHistory().size(), "В истории должна быть одна задача!");
 
         //с. Удаление из истории: начало, середина, конец.
-        task = new Task(100, "Задача 1", "Задача для удаления из начала истории");
+        task = new Task(100,"Задача 1", "Задача для удаления из начала истории");
         histManager.add(task);
 
-        task = new Task(200, "Задача 2", "Промежуточная задача для тестирования");
+        task = new Task(200,"Задача 2", "Промежуточная задача для тестирования");
         histManager.add(task);
 
-        task = new Task(300, "Задача 3", "Задача для удаления из середины истории");
+        task = new Task(300,"Задача 3", "Задача для удаления из середины истории");
         histManager.add(task);
 
-        task = new Task(400, "Задача 3", "Задача для удаления с конца истории");
+        task = new Task(400,"Задача 3", "Задача для удаления с конца истории");
         histManager.add(task);
 
         histManager.remove(100);

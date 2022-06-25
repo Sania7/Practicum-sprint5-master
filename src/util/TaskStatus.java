@@ -1,7 +1,7 @@
 package util;
 
 public enum TaskStatus {
-    NEW,
-    IN_PROGRESS,
-    DONE
+    NEW, // новая задача, выполнять ее еще не начали
+    IN_PROGRESS, // задача в работе
+    DONE // выполненная задача
 }

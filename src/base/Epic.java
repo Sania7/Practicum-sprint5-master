@@ -8,22 +8,30 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class Epic extends Task {
-    private ArrayList<SubTask> subTasks;
 
-    private LocalDateTime endTime;
+    private ArrayList<SubTask> subTasks;    //Список подзадач
 
+    private LocalDateTime endTime;        //Окончание последней задачи
+
+    //Конструктор
     public Epic(Integer num, String name, String details) {
         super(num, name, details, TaskType.EPIC);
+
         subTasks = new ArrayList<>();
     }
 
+    //Добавление новой подзадачи к эпику
+    public void addSubTask(SubTask subTask){
+        subTasks.add(subTask);
+        refreshDates();
+    }
+
     //Получение статуса Эпика
-    public TaskStatus getStatus() {
-        updateDates();
+    public TaskStatus getStatus(){
         TaskStatus result;
         int statusSum = TaskStatus.NEW.ordinal();
 
-        if (subTasks.size() == 0) {  //Если нет подзадач
+        if (subTasks.size() == 0){  //Если нет подзадач
             result = TaskStatus.NEW;  //Для пустого эпика вернуть статус NEW
         } else {  //Статус непустых эпиков определяется статусами подзадач
             for (SubTask subTask : subTasks)
@@ -37,11 +45,12 @@ public class Epic extends Task {
                 result = TaskStatus.IN_PROGRESS;
             }
         }
+
         return result;
     }
 
-    // обновление дат начала, окончания, продолжительности эпика
-    public void updateDates() {
+    //Обновление дат начала/окончания и продолжительности эпика
+    public void refreshDates(){
         Duration sumDuration = null;
         LocalDateTime firstDate = null;
         LocalDateTime lastDate = null;
@@ -65,10 +74,11 @@ public class Epic extends Task {
         endTime = lastDate;
     }
 
-    // получить дату окончания
+    //Возвращение вычисляемой даты окончания
     public LocalDateTime getEndTime() {
         return endTime;
     }
+
     //Получение списка всех подзадач
     public ArrayList<SubTask> getSubTasks() {
         return subTasks;
@@ -77,6 +87,12 @@ public class Epic extends Task {
     //Отображение Эпика
     @Override
     public String toString() {
-        return getNum() + "," + getType() + "," + getName() + "," + getStatus() + "," + getDetails() + ",";
+        return getNum() + "," +
+                getType() + "," +
+                getName() + "," +
+                getStatus() + "," +
+                getDetails() + ",," +
+                getStartTime() + "," +
+                (getDuration() == Duration.ZERO ? "" : getDuration());
     }
 }

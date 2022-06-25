@@ -1,31 +1,48 @@
 package base;
 
+import com.google.gson.annotations.SerializedName;
 import util.TaskType;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class SubTask extends Task {
-    // ссылка на родителя Эпик
-    private Epic epic;
 
-    // конструктор
+    private transient Epic epic;    //Ссылка на родительский Эпик
+
+    @SerializedName("epic")
+    private Integer epicNum;
+
+    //Конструктор
     public SubTask(Integer num, String name, String details, Epic epic) {
         super(num, name, details, TaskType.SUBTASK);
+
         this.epic = epic;
+        epicNum = epic.getNum();
     }
 
-    // конструктор
+    //Конструктор
     public SubTask(String name, String details, Epic epic) {
         super(name, details, TaskType.SUBTASK);
+
         this.epic = epic;
+        epicNum = epic.getNum();
     }
 
+    //Конструктор
+    public SubTask(Integer num, String name, String details, Epic epic, LocalDateTime startTime, Duration duration) {
+        super(num, name, details, TaskType.SUBTASK, startTime, duration);
+
+        this.epic = epic;
+        epicNum = epic.getNum();
+    }
+
+    //Конструктор
     public SubTask(String name, String details, Epic epic, LocalDateTime startTime, Duration duration) {
-        super(name,details,TaskType.SUBTASK,startTime,duration);
-    }
+        super(name, details, TaskType.SUBTASK, startTime, duration);
 
-    public SubTask() {
+        this.epic = epic;
+        epicNum = epic.getNum();
     }
 
     //Получение Эпика
@@ -36,11 +53,25 @@ public class SubTask extends Task {
     //Задание Эпика
     public void setEpic(Epic epic) {
         this.epic = epic;
+        epicNum = epic.getNum();
+    }
+
+    //Получение номера эпика
+    public int getEpicNum(){
+        return epicNum;
     }
 
     //Отображение задачи
     @Override
     public String toString() {
-        return getNum() + "," + getType() + "," + getName() + "," + getStatus() + "," + getDetails() + "," + getEpic().getNum();
+        return getNum() + "," +
+                getType() + "," +
+                getName() + "," +
+                getStatus() + "," +
+                getDetails() + "," +
+                //(epic == null ? "" : epic.getNum()) + "," +
+                epicNum  + "," +
+                getStartTime() + "," +
+                (getDuration() == Duration.ZERO ? "" : getDuration());
     }
 }

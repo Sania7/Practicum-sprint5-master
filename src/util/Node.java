@@ -1,8 +1,8 @@
-package controller;
+package util;
 
-import base.Task;
-
+// узел
 public class Node<N> {
+
     private N item;
     private Node<N> next;
     private Node<N> prev;

@@ -2,62 +2,95 @@ package test;
 
 import base.Epic;
 import base.SubTask;
-import controller.Managers;
-import controller.TaskManager;
+import managers.Managers;
+import managers.TaskManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import util.TaskStatus;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class EpicTest {
 
-    TaskManager taskManager; // получение менеджера задач
+    TaskManager taskManager;    //Получение менеджера задач
     Epic epic;
     SubTask subTask1;
     SubTask subTask2;
 
     @BeforeEach
     public void beforeEach() {
-        taskManager = Managers.getDefault();
+        taskManager = Managers.getDefault(1);    //Получение менеджера задач
     }
 
-    // тестирование получения статуса Эпика
+    //Тестирование процедуры получения статуса Эпика
     @Test
     void getStatus() {
-        // создание первого Эпика с подзадачами
-        epic = new Epic(200, "Отпуск", "Телефон туроператора: +777 21 721");
+        //Формирование первого Эпика с подзадачами
+        epic = new Epic(200,"Переезд", "Телефон перевозчика: +123 456 78 90");
         taskManager.addTask(epic);
 
-        // 1.пустой список подзадач
+        //a. Пустой список подзадач.
         assertEquals(TaskStatus.NEW, epic.getStatus(),
-        "Пустой Эпик имеет статус NEW");
+                "Эпик в пустым списком задач должен иметь статус NEW!");
 
-        // 2. подзадачи со статусом NEW
-        subTask1 = new SubTask("Собрать вещи", "Сумки в гардеробе", epic);
+        //b. Все подзадачи со статусом NEW.
+        subTask1 = new SubTask("Собрать коробки", "Коробки на чердаке", epic);
         taskManager.addTask(subTask1);
-        subTask2 = new SubTask("Взять одежду для купания", "Купить в интернете", epic);
+        subTask2 = new SubTask("Упаковать кошку", "Переноска за дверью", epic);
         taskManager.addTask(subTask2);
         assertEquals(TaskStatus.NEW, epic.getStatus(),
-        "Эпик с подзадачами со статусом NEW должен иметь статус NEW");
+                "Эпик с подзадачами в статусе NEW должен иметь статус NEW!");
 
-        // 3.подзадачи со статусами NEW и DONE
+        //d. Подзадачи со статусами NEW и DONE.
         subTask1.setStatus(TaskStatus.DONE);
         assertEquals(TaskStatus.IN_PROGRESS, epic.getStatus(),
-        "Эпик со всеми подзадачами в статусе NEW и DONE должен быть с статусе IN_PROGRESS");
+                "Эпик с подзадачами в статусе NEW и DONE должен иметь статус IN_PROGRESS!");
 
-        // 4. подзадачи со статусом DONE
+        //c. Все подзадачи со статусом DONE.
         subTask2.setStatus(TaskStatus.DONE);
         assertEquals(TaskStatus.DONE, epic.getStatus(),
-                "Эпик с подзадачами в статусе DONE должен иметь статус DONE");
+                "Эпик со всеми подзадачами в статусе DONE должен иметь статус DONE!");
 
-        // 5.подзадачи со статусом IN_PROGRESS
+        //e. Подзадачи со статусом IN_PROGRESS.
         subTask1.setStatus(TaskStatus.IN_PROGRESS);
         assertEquals(TaskStatus.IN_PROGRESS, epic.getStatus(),
-        "Эпик с подзадачей в статусе IN_PROGRESS должен иметь статус IN_PROGRESS");
+                "Эпик с подзадачей в статусе IN_PROGRESS должен иметь статус IN_PROGRESS!");
 
         subTask2.setStatus(TaskStatus.IN_PROGRESS);
         assertEquals(TaskStatus.IN_PROGRESS, epic.getStatus(),
                 "Эпик со всеми подзадачами в статусе IN_PROGRESS должен иметь статус IN_PROGRESS!");
+    }
+
+    //Тестирование процедуры получения длительности Эпика
+    @Test
+    void getDuration() {
+        epic = new Epic(300,"Эпик 2", "Эпик с подзадачами");
+        taskManager.addTask(epic);
+
+        //a. Пустой список подзадач.
+        assertDoesNotThrow(()->epic.getDuration(),
+                "Запрос длительности у пустого эпика не должен вызывать исключений!");
+
+        //a. Со стандартным поведением.
+        subTask1 = new SubTask("Собрать коробки",
+                "Коробки на чердаке",
+                epic,
+                LocalDateTime.now(),
+                Duration.ofHours(1).plusMinutes(30));
+        taskManager.addTask(subTask1);
+
+        subTask2 = new SubTask("Подзадача 2",
+                "Подзадача для проверки подсчёта продолжительности эпика",
+                epic,
+                LocalDateTime.now(),
+                Duration.ofHours(2).plusMinutes(15));
+        taskManager.addTask(subTask2);
+
+        assertEquals(Duration.ofHours(3).plusMinutes(45), epic.getDuration(),
+                "Продолжительность эпика должна быть равна сумме его подзадач!");
+
     }
 }

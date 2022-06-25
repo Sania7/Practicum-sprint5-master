@@ -1,4 +1,4 @@
-package controller;
+package managers;
 
 import base.Task;
 
@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.TreeSet;
 
 public interface HistoryManager {
+
+
     //Добавление нового просмотра задачи
     void add(Task task);
 
@@ -13,5 +15,5 @@ public interface HistoryManager {
     void remove(int id);
 
     //Получение истории последних просмотров
-    TreeSet<Task> getHistory();
+    List<Task> getHistory();
 }

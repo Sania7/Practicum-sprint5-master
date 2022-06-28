@@ -65,7 +65,7 @@ public class KVTaskClient {
             } else {
                 throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
             }
-        } catch (HttpRequestException | IOException | InterruptedException exception) {
+        } catch (IOException | InterruptedException exception) {
 
         }
         throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
@@ -89,7 +89,7 @@ public class KVTaskClient {
             } else {
                 throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
             }
-        } catch (HttpRequestException | IOException | InterruptedException exception) {
+        } catch (IOException | InterruptedException exception) {
 
         }
         throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
@@ -111,7 +111,7 @@ public class KVTaskClient {
             } else {
                 throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
             }
-        } catch (HttpRequestException | IOException | InterruptedException exception) {
+        } catch (IOException | InterruptedException exception) {
         }
         throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
     }

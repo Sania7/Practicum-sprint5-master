@@ -27,6 +27,10 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
         this.saveFile = Paths.get(saveFile);
     }
 
+    public FileBackedTasksManager() {
+
+    }
+
     //Метод для проверки работы менеджера
     public static void main(String[] args){
         FileBackedTasksManager manager  = new FileBackedTasksManager("save_tasks.txt");

@@ -5,6 +5,8 @@ import base.SubTask;
 import base.Task;
 import com.google.gson.*;
 import managers.FileBackedTasksManager;
+import managers.InMemoryTasksManager;
+import managers.TaskManager;
 import util.DurationTypeAdapter;
 import util.LocalDateTimeTypeAdapter;
 import util.TaskType;
@@ -12,93 +14,87 @@ import util.TaskType;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import static sun.nio.ch.IOUtil.load;
+
 public class HTTPTasksManager extends FileBackedTasksManager {
+    static Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
+            .registerTypeAdapter(Duration.class, new DurationTypeAdapter())
+            .create();
 
-    //Общий клиент экземпляров класса для отправки данных на KV сервер
-    private static KVTaskClient kvClient = new KVTaskClient("localhost");
+    private final KVTaskClient client;
+    InMemoryTasksManager manager;
 
-    private final String saveKey;   //Ключ для сохранения менеджера на KV сервер
+    TaskManager taskManager;
 
     //Конструктор класса
-    public HTTPTasksManager() {
-        super("");
-        saveKey = "HTTPTaskManager";
+    public HTTPTasksManager(String url) {
+        this(url, false);
     }
 
     //Конструктор класса
-    public HTTPTasksManager(String saveKey) {
-        super("");
-        this.saveKey = saveKey;
+    public HTTPTasksManager(String url, boolean load) {
+        super(null);
+        client = new KVTaskClient(url);
+        if (load) {
+            load();
+        }
     }
 
     //Перегрузка метода для добавления записи изменений в файл
-    @Override
     public void addTask(Task newTask){
         super.addTask(newTask);
         save();
     }
 
     //Перегрузка метода для добавления записи изменений в файл
-    @Override
     public void updateTask(Task newTask){
         super.updateTask(newTask);
         save();
     }
 
     //Перегрузка метода для добавления записи изменений в файл
-    @Override
     public void delTask(Integer num){
         super.delTask(num);
         save();
     }
 
     //Перегрузка метода для добавления записи изменений
-    @Override
     public Task getTask(int num){
         Task task = super.getTask(num);
         save();
         return task;
     }
     //Сохранение данных на сервер
-    @Override
-    public void save() {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
-                .registerTypeAdapter(Duration.class, new DurationTypeAdapter())
-                .create();
 
+    public void save() {
+        new GsonBuilder();
         JsonObject result = new JsonObject();
         result.add("tasks", gson.toJsonTree(getTasksList()));
-
         JsonArray hist = new JsonArray();
         result.add("history", hist);
         for (Task task : history.getHistory()){
             hist.add(task.getNum());
         }
 
-        kvClient.put(saveKey, result.toString());   //Отправка образа менеджера на сервер
     }
 
     //Создание нового экземпляра менеджера на основе данных с сервера
-    public static HTTPTasksManager loadFromJson(String loadKey, String newKey){
-        HTTPTasksManager newManager = new HTTPTasksManager(newKey);
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
-                .registerTypeAdapter(Duration.class, new DurationTypeAdapter())
-                .create();
-
+    public void loadFromJson(String loadKey) {
+        KVTaskClient kvClient = new KVTaskClient("localhost");
+        HTTPTasksManager newManager = new HTTPTasksManager("url");
+        new GsonBuilder();
         JsonElement mngElement = JsonParser.parseString(kvClient.load(loadKey));
         if(!mngElement.isJsonObject()) {    // проверяем, точно ли мы получили JSON-объект
             System.out.println("Ответ от сервера не соответствует ожидаемому.");
-            return null;
         }
         JsonObject mngJsonObj = mngElement.getAsJsonObject();
 
         //Формирование структуры задач нового менеджера
         JsonArray tasksJsonArray = mngJsonObj.getAsJsonArray("tasks");
-        for(JsonElement taskElement : tasksJsonArray){
+        for(JsonElement taskElement : tasksJsonArray) {
             String taskType = taskElement.getAsJsonObject().get("type").getAsString();
-            switch(TaskType.valueOf(taskType)){
+            switch(TaskType.valueOf(taskType)) {
                 case TASK:  //Загрузка обычных задач
                     newManager.addTask(gson.fromJson(taskElement, Task.class));
                     break;
@@ -106,7 +102,7 @@ public class HTTPTasksManager extends FileBackedTasksManager {
                     Epic epic = gson.fromJson(taskElement, Epic.class);
                     newManager.addTask(epic);
                     //Коррекция подзадач после десериализации
-                    for(SubTask subTask : epic.getSubTasks()){
+                    for(SubTask subTask : epic.getSubTasks()) {
                         subTask.setEpic(epic);                              //Восстановление обратной связи с эпиком
                         newManager.taskList.put(subTask.getNum(), subTask); //Прописывание подзадачи в общем списке менеджера
                     }
@@ -117,12 +113,10 @@ public class HTTPTasksManager extends FileBackedTasksManager {
         }
 
         newManager.refreshSortedSet();
-
         //Формирование истории нового менеджена задач
         JsonArray histJsonArray = mngJsonObj.getAsJsonArray("history");
         for (JsonElement histElement : histJsonArray){
             newManager.getTask(histElement.getAsInt());
         }
-        return newManager;
     }
 }

@@ -38,7 +38,7 @@ public class HTTPTasksManagerTest {
     //Тестирование метода сохранения задач в базу
     @Test
     void save() {
-        taskManager =  new HTTPTasksManager();
+        taskManager =  new HTTPTasksManager("url");
         assertNotNull(taskManager.getPrioritizedTasks(), "Список задач не пустой!");
 
         epic = new Epic(200,"Эпик 1", "Пустой эпик");
@@ -84,8 +84,8 @@ public class HTTPTasksManagerTest {
 
     //Тестирование метода восстановления задач с сервера
     @Test
-    void loadFromJson() {
-        HTTPTasksManager taskManager =  new HTTPTasksManager("PrimaryManager");
+    void loadFromJsonTest() {
+        HTTPTasksManager taskManager1 = new HTTPTasksManager("url");
         assertNotNull(taskManager.getPrioritizedTasks(), "Список задач не пустой!");
 
         //Формирование первичного менеджера задач
@@ -126,7 +126,8 @@ public class HTTPTasksManagerTest {
         taskManager.getTask(300);
 
         //Создание нового менеджера задач на основе образа с сервера
-        HTTPTasksManager taskManager1 = HTTPTasksManager.loadFromJson("PrimaryManager", "CopyOfPrimaryManager");
+
+        taskManager1.loadFromJson("PrimaryManager");
 
         assertEquals(3, taskManager1.getPrioritizedTasks().size(),
                 "Количество задач в списке приоритетов после восстаносления с сервера не верно!");

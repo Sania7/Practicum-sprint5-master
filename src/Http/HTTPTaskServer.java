@@ -40,21 +40,22 @@ public class HTTPTaskServer {
 
     //Конструктор класса
     public HTTPTaskServer() throws IOException {
-        manager = new HTTPTasksManager();    //Создание менеджера задач
+        manager = new HTTPTasksManager("url");    //Создание менеджера задач
         server = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
         createContext(server);
     }
 
     //Конструктор класса с заданием именем сохранения менеджера на сервере
     public HTTPTaskServer(String saveKey) throws IOException {
-        manager = new HTTPTasksManager(saveKey);    //Создание менеджера задач
+        manager = new HTTPTasksManager("url");    //Создание менеджера задач
         server = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
         createContext(server);
     }
 
     //Конструктор класса на основе загрузки образа менеджера с сервера
     public HTTPTaskServer(String newKey, String loadKey) throws IOException {
-        manager = HTTPTasksManager.loadFromJson(loadKey, newKey);    //Создание менеджера задач
+        manager = new HTTPTasksManager("url");    //Создание менеджера задач
+        manager.loadFromJson("url");
         server = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
         createContext(server);
         start();
@@ -89,14 +90,14 @@ public class HTTPTaskServer {
         });
 
         //Получение истории обращения к задачам
-        server.createContext("/tasks/history", (h) ->{
+        server.createContext("/tasks/history", (h) -> {
             JsonObject resp = new JsonObject();
             try {
                 System.out.println("\n/tasks/history");
                 if ("GET".equals(h.getRequestMethod())) {
                     JsonArray hist = new JsonArray();
                     resp.add("history", hist);
-                    for (Task task : manager.history()){
+                    for (Task task : manager.history()) {
                         hist.add(task.getNum());
                     }
                     sendText(h, resp.toString());
@@ -124,10 +125,18 @@ public class HTTPTaskServer {
                             sendText(h, gson.toJson(manager.getTask(id)));
                         }
                         break;
-                    case "POST":    //Создать задачу на основе полученного Json
-                        manager.addTask(gson.fromJson(JsonParser.parseString(readText(h)), Task.class));
-                        h.sendResponseHeaders(200, 0);
-                        break;
+                    case "POST":
+                        String body = readText(h);
+                        if (body.isEmpty()) {
+                            h.sendResponseHeaders(400,0);
+                            return;
+                        }
+                        Task task = gson.fromJson(body,Task.class);
+                        if (task.getNum() == null) {
+                            manager.addTask(task);
+                        } else {
+                            manager.updateTask(task);
+                        }
                     case "DELETE":  //Удаление задачи (либо - задач, если идентификатор пустой)
                         manager.delTask(id);
                         h.sendResponseHeaders(200, 0);
@@ -142,7 +151,7 @@ public class HTTPTaskServer {
         });
 
         //Работа с подзадачами: получение(клиентом), создание, удаление
-        server.createContext("/tasks/subtask", (h) ->{
+        server.createContext("/tasks/subtask", (h) -> {
             Integer id = getIntParam(h.getRequestURI(), "id");
             try {
                 System.out.println("\n/tasks/subtask");
@@ -155,11 +164,17 @@ public class HTTPTaskServer {
                         }
                         break;
                     case "POST":    //Создать задачу на основе полученного Json
-                        SubTask subTask = gson.fromJson(JsonParser.parseString(readText(h)), SubTask.class);
-                        manager.addTask(subTask);
-                        //manager.addTask(gson.fromJson(JsonParser.parseString(readText(h)), SubTask.class));
-                        h.sendResponseHeaders(200, 0);
-                        break;
+                        String body = readText(h);
+                        if (body.isEmpty()) {
+                            h.sendResponseHeaders(400,0);
+                            return;
+                        }
+                        SubTask task = gson.fromJson(body,SubTask.class);
+                        if (task.getNum() == null) {
+                            manager.addTask(task);
+                        } else {
+                            manager.updateTask(task);
+                        }
                     case "DELETE":  //Удаление подзадачи
                         if (id != null) {
                             manager.delTask(id);
@@ -209,20 +224,31 @@ public class HTTPTaskServer {
                         }
                         break;
                     case "POST":    //Создать эпика на основе полученного Json
+//                        String body = readText(h);
+//                        if (body != null) {
+//                            Epic epic = gson.fromJson(JsonParser.parseString(body), Epic.class);
+//                            manager.addTask(epic);
+//                            //Коррекция подзадач (если они пришли в составе эпика) после десериализации
+//                            for (SubTask subTask : epic.getSubTasks()) {
+//                                subTask.setEpic(epic);  //Восстановление обратной связи с эпиком
+//                                manager.getAllTasksList().put(subTask.getNum(), subTask);    //Прописывание подзадачи в общем списке менеджера
+//                            }
+//                        } else {
+//                            System.out.println("Пустые данные для создания эпика");
+//                        }
+//                        h.sendResponseHeaders(200, 0);
+//                        break;
                         String body = readText(h);
-                        if (body != null) {
-                            Epic epic = gson.fromJson(JsonParser.parseString(body), Epic.class);
-                            manager.addTask(epic);
-                            //Коррекция подзадач (если они пришли в составе эпика) после десериализации
-                            for (SubTask subTask : epic.getSubTasks()) {
-                                subTask.setEpic(epic);  //Восстановление обратной связи с эпиком
-                                manager.getAllTasksList().put(subTask.getNum(), subTask);    //Прописывание подзадачи в общем списке менеджера
-                            }
-                        } else {
-                            System.out.println("Пустые данные для создания эпика");
+                        if (body.isEmpty()) {
+                            h.sendResponseHeaders(400,0);
+                            return;
                         }
-                        h.sendResponseHeaders(200, 0);
-                        break;
+                        Epic epic = gson.fromJson(body,Epic.class);
+                        if (epic.getNum() == null) {
+                            manager.addTask(epic);
+                        } else {
+                            manager.updateTask(epic);
+                        }
                     case "DELETE":  //Удаление эпика (с подзадачами)
                         if (id != null) {
                             manager.delTask(id);

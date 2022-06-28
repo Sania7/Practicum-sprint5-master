@@ -16,7 +16,7 @@ public class Managers {
             case 2:
                 return fileBackedManager == null ? new FileBackedTasksManager("save_tasks.txt") : fileBackedManager;
             case 3:
-                return httpManager == null ? new HTTPTasksManager("save_tasks.txt") : httpManager;
+                return httpManager == null ? new HTTPTasksManager("url") : httpManager;
         }
 
         return null;

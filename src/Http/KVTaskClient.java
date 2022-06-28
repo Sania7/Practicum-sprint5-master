@@ -1,5 +1,8 @@
 package Http;
 
+import exception.HttpRequestException;
+import exception.TimeErrorException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -57,13 +60,15 @@ public class KVTaskClient {
             HttpResponse<String> response = client.send(request, handler);
 
             //System.out.println(response.statusCode());
-            if (response.statusCode() == 200)
+            if (response.statusCode() == 200) {
                 return response.body();
-        } catch (IOException | InterruptedException e) { // обрабатываем ошибки отправки запроса
-            System.out.println("Во время выполнения запроса возникла ошибка: " + e.getMessage());
-        }
+            } else {
+                throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
+            }
+        } catch (HttpRequestException | IOException | InterruptedException exception) {
 
-        return "";
+        }
+        throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
     }
 
     //Сохранение данных по сети
@@ -76,14 +81,18 @@ public class KVTaskClient {
                 .build();
 
         try {
-            HttpResponse.BodyHandler<String> handler = HttpResponse.BodyHandlers.ofString();
-            HttpResponse<String> response = client.send(request, handler);
+            HttpResponse.BodyHandler<Void> handler = HttpResponse.BodyHandlers.discarding();
+            HttpResponse<Void> response = client.send(request, handler);
 
-            if (response.statusCode() != 200)
+            if (response.statusCode() != 200) {
                 System.out.println("Код ответа: " + response.statusCode());
-        } catch (IOException | InterruptedException e) { // обрабатываем ошибки отправки запроса
-            System.out.println("Во время выполнения запроса возникла ошибка: " + e.getMessage());
+            } else {
+                throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
+            }
+        } catch (HttpRequestException | IOException | InterruptedException exception) {
+
         }
+        throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
     }
 
     //Получение данных из базы
@@ -94,17 +103,16 @@ public class KVTaskClient {
                 .uri(uri)
                 .GET()
                 .build();
-
         try {
             HttpResponse.BodyHandler<String> handler = HttpResponse.BodyHandlers.ofString();
             HttpResponse<String> response = client.send(request, handler);
-
-            if (response.statusCode() == 200)
+            if (response.statusCode() == 200) {
                 return response.body();
-        } catch (IOException | InterruptedException e) { // обрабатываем ошибки отправки запроса
-            System.out.println("Во время выполнения запроса возникла ошибка: " + e.getMessage());
+            } else {
+                throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
+            }
+        } catch (HttpRequestException | IOException | InterruptedException exception) {
         }
-
-        return "";
+        throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
     }
 }

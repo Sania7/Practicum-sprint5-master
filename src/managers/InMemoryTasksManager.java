@@ -23,12 +23,12 @@ public class InMemoryTasksManager implements TaskManager {
             return 1;
         } else return -1;
     });
-    protected InMemoryHistoryManager history;
+    protected HistoryManager history;
 
     //Конструктор
     public InMemoryTasksManager() {
         taskList = new HashMap<>();
-        history = (InMemoryHistoryManager) Managers.getDefaultHistory();
+        history = Managers.getDefaultHistory();
     }
 
     //Получение списка всех задач (Эпики + Задачи + Подзадачи).
@@ -163,7 +163,7 @@ public class InMemoryTasksManager implements TaskManager {
     public void delTask(Integer num) {
         if (num == null){   //Если идентификатор пустой - удаляем всё
             taskList.clear();
-            history.clear();
+            history.remove(num);
         } else {
             Task delTask = getTask(num);                    //Получение экземпляра удаляемой задачи
             if (delTask != null){

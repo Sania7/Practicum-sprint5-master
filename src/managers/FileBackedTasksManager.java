@@ -210,7 +210,7 @@ public class FileBackedTasksManager extends InMemoryTasksManager {
         for (int i = 1; i < lines.size(); i++){     //В первой строке - заголовки
             if (lines.get(i).isEmpty()){            //После пустой строки - считвание истории
                 if (lines.size() > (i + 1) && !lines.get(i + 1).isEmpty()){
-                    fm.history.clear();             //Очистка истории перед её загрузкой
+                    fm.history.remove(lines.size());             //Очистка истории перед её загрузкой
                     for(Integer num : InMemoryHistoryManager.fromString(lines.get(i + 1))){
                         fm.getTask(num);            //Обращение к задаче для формирования мстории
                     }

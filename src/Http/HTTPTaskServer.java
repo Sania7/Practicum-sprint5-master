@@ -3,9 +3,14 @@ package Http;
 import base.Epic;
 import base.SubTask;
 import base.Task;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import managers.Managers;
+import managers.TaskManager;
 import util.DurationTypeAdapter;
 import util.LocalDateTimeTypeAdapter;
 
@@ -17,9 +22,10 @@ import java.time.LocalDateTime;
 
 public class HTTPTaskServer {
 
-    private HTTPTasksManager manager;
+    TaskManager taskManager;
     private final int PORT = 8080;    //Порт для прослушивания
     private HttpServer server;
+
 
     public static void main(String[] args) throws IOException {
         HTTPTaskServer serv = new HTTPTaskServer();
@@ -40,22 +46,22 @@ public class HTTPTaskServer {
 
     //Конструктор класса
     public HTTPTaskServer() throws IOException {
-        manager = new HTTPTasksManager("url");    //Создание менеджера задач
+        taskManager = new HTTPTasksManager("url");    //Создание менеджера задач
         server = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
         createContext(server);
     }
 
     //Конструктор класса с заданием именем сохранения менеджера на сервере
     public HTTPTaskServer(String saveKey) throws IOException {
-        manager = new HTTPTasksManager("url");    //Создание менеджера задач
+        taskManager = (TaskManager) Managers.getDefault();    //Создание менеджера задач
         server = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
         createContext(server);
     }
 
     //Конструктор класса на основе загрузки образа менеджера с сервера
     public HTTPTaskServer(String newKey, String loadKey) throws IOException {
-        manager = new HTTPTasksManager("url");    //Создание менеджера задач
-        manager.loadFromJson("url");
+        taskManager = (TaskManager) Managers.getDefault();    //Создание менеджера задач
+        // manager.loadFromJson("url");
         server = HttpServer.create(new InetSocketAddress("localhost", PORT), 0);
         createContext(server);
         start();
@@ -76,7 +82,7 @@ public class HTTPTaskServer {
                 if ("GET".equals(h.getRequestMethod())) {
                     JsonArray priority = new JsonArray();
                     resp.add("taskPriority", priority);
-                    for (Task task : manager.getPrioritizedTasks()){
+                    for (Task task : taskManager.getPrioritizedTasks()){
                         priority.add(task.getNum());
                     }
                     sendText(h, resp.toString());
@@ -97,7 +103,7 @@ public class HTTPTaskServer {
                 if ("GET".equals(h.getRequestMethod())) {
                     JsonArray hist = new JsonArray();
                     resp.add("history", hist);
-                    for (Task task : manager.history()) {
+                    for (Task task : taskManager.history()) {
                         hist.add(task.getNum());
                     }
                     sendText(h, resp.toString());
@@ -119,10 +125,10 @@ public class HTTPTaskServer {
                 switch (h.getRequestMethod()) {
                     case "GET":     //Отправить задачу(задачи) по запросу
                         if (id == null) {   //Если идентификатор не указан - выдать все
-                            resp.add("tasks", gson.toJsonTree(manager.getTasksList()));
+                            resp.add("tasks", gson.toJsonTree(taskManager.getTasksList()));
                             sendText(h, resp.toString());
                         } else {
-                            sendText(h, gson.toJson(manager.getTask(id)));
+                            sendText(h, gson.toJson(taskManager.getTask(id)));
                         }
                         break;
                     case "POST":
@@ -133,12 +139,12 @@ public class HTTPTaskServer {
                         }
                         Task task = gson.fromJson(body,Task.class);
                         if (task.getNum() == null) {
-                            manager.addTask(task);
+                            taskManager.addTask(task);
                         } else {
-                            manager.updateTask(task);
+                            taskManager.updateTask(task);
                         }
                     case "DELETE":  //Удаление задачи (либо - задач, если идентификатор пустой)
-                        manager.delTask(id);
+                        taskManager.delTask(id);
                         h.sendResponseHeaders(200, 0);
                         break;
                     default:
@@ -158,7 +164,7 @@ public class HTTPTaskServer {
                 switch (h.getRequestMethod()) {
                     case "GET":     //Отправить подзадачу по запросу
                         if (id != null) {
-                            sendText(h, gson.toJson((SubTask)manager.getTask(id)));
+                            sendText(h, gson.toJson((SubTask)taskManager.getTask(id)));
                         } else {
                             h.sendResponseHeaders(404, 0);
                         }
@@ -171,13 +177,13 @@ public class HTTPTaskServer {
                         }
                         SubTask task = gson.fromJson(body,SubTask.class);
                         if (task.getNum() == null) {
-                            manager.addTask(task);
+                            taskManager.addTask(task);
                         } else {
-                            manager.updateTask(task);
+                            taskManager.updateTask(task);
                         }
                     case "DELETE":  //Удаление подзадачи
                         if (id != null) {
-                            manager.delTask(id);
+                            taskManager.delTask(id);
                         }
                         h.sendResponseHeaders(200, 0);
                         break;
@@ -197,7 +203,7 @@ public class HTTPTaskServer {
                 System.out.println("\n/tasks/subtask/epic");
                 if ("GET".equals(h.getRequestMethod())) {
                     if (id != null) {
-                        sendText(h, gson.toJson(((SubTask)manager.getTask(id)).getEpic()));
+                        sendText(h, gson.toJson(((SubTask)taskManager.getTask(id)).getEpic()));
                     } else {
                         h.sendResponseHeaders(404, 0);
                     }
@@ -218,26 +224,12 @@ public class HTTPTaskServer {
                 switch (h.getRequestMethod()) {
                     case "GET":     //Отправить эпик по запросу
                         if (id != null) {
-                            sendText(h, gson.toJson((Epic)manager.getTask(id)));
+                            sendText(h, gson.toJson((Epic)taskManager.getTask(id)));
                         } else {
                             h.sendResponseHeaders(404, 0);
                         }
                         break;
-                    case "POST":    //Создать эпика на основе полученного Json
-//                        String body = readText(h);
-//                        if (body != null) {
-//                            Epic epic = gson.fromJson(JsonParser.parseString(body), Epic.class);
-//                            manager.addTask(epic);
-//                            //Коррекция подзадач (если они пришли в составе эпика) после десериализации
-//                            for (SubTask subTask : epic.getSubTasks()) {
-//                                subTask.setEpic(epic);  //Восстановление обратной связи с эпиком
-//                                manager.getAllTasksList().put(subTask.getNum(), subTask);    //Прописывание подзадачи в общем списке менеджера
-//                            }
-//                        } else {
-//                            System.out.println("Пустые данные для создания эпика");
-//                        }
-//                        h.sendResponseHeaders(200, 0);
-//                        break;
+                    case "POST":
                         String body = readText(h);
                         if (body.isEmpty()) {
                             h.sendResponseHeaders(400,0);
@@ -245,13 +237,13 @@ public class HTTPTaskServer {
                         }
                         Epic epic = gson.fromJson(body,Epic.class);
                         if (epic.getNum() == null) {
-                            manager.addTask(epic);
+                            taskManager.addTask(epic);
                         } else {
-                            manager.updateTask(epic);
+                            taskManager.updateTask(epic);
                         }
                     case "DELETE":  //Удаление эпика (с подзадачами)
                         if (id != null) {
-                            manager.delTask(id);
+                            taskManager.delTask(id);
                         }
                         h.sendResponseHeaders(200, 0);
                         break;

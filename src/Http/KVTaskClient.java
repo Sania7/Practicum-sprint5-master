@@ -84,8 +84,8 @@ public class KVTaskClient {
 
             if (response.statusCode() != 200) {
                 System.out.println("Код ответа: " + response.statusCode());
-            } else {
-                throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
+            } else if (response.statusCode() == 200) {
+                 response.body();
             }
         } catch (IOException | InterruptedException exception) {
             throw new HttpRequestException("Ошибка выполнения запроса к KVServer");

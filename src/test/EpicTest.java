@@ -22,7 +22,7 @@ class EpicTest {
 
     @BeforeEach
     public void beforeEach() {
-        taskManager = Managers.getDefault(1);    //Получение менеджера задач
+        taskManager = Managers.getDefault();    //Получение менеджера задач
     }
 
     //Тестирование процедуры получения статуса Эпика

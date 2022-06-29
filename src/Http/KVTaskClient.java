@@ -59,16 +59,14 @@ public class KVTaskClient {
             HttpResponse.BodyHandler<String> handler = HttpResponse.BodyHandlers.ofString();
             HttpResponse<String> response = client.send(request, handler);
 
-            //System.out.println(response.statusCode());
             if (response.statusCode() == 200) {
                 return response.body();
             } else {
                 throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
             }
         } catch (IOException | InterruptedException exception) {
-
+            throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
         }
-        throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
     }
 
     //Сохранение данных по сети
@@ -90,9 +88,8 @@ public class KVTaskClient {
                 throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
             }
         } catch (IOException | InterruptedException exception) {
-
+            throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
         }
-        throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
     }
 
     //Получение данных из базы
@@ -112,7 +109,7 @@ public class KVTaskClient {
                 throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
             }
         } catch (IOException | InterruptedException exception) {
+            throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
         }
-        throw new HttpRequestException("Ошибка выполнения запроса к KVServer");
     }
 }

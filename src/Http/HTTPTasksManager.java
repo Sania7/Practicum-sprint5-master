@@ -17,15 +17,12 @@ import java.time.LocalDateTime;
 import static sun.nio.ch.IOUtil.load;
 
 public class HTTPTasksManager extends FileBackedTasksManager {
-    static Gson gson = new GsonBuilder()
+   private static Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
             .registerTypeAdapter(Duration.class, new DurationTypeAdapter())
             .create();
 
-    private final KVTaskClient client;
-    InMemoryTasksManager manager;
-
-    TaskManager taskManager;
+    private final KVTaskClient kvClient;
 
     //Конструктор класса
     public HTTPTasksManager(String url) {
@@ -35,40 +32,14 @@ public class HTTPTasksManager extends FileBackedTasksManager {
     //Конструктор класса
     public HTTPTasksManager(String url, boolean load) {
         super(null);
-        client = new KVTaskClient(url);
+        kvClient = new KVTaskClient(url);
         if (load) {
             load();
         }
     }
-
-    //Перегрузка метода для добавления записи изменений в файл
-    public void addTask(Task newTask){
-        super.addTask(newTask);
-        save();
-    }
-
-    //Перегрузка метода для добавления записи изменений в файл
-    public void updateTask(Task newTask){
-        super.updateTask(newTask);
-        save();
-    }
-
-    //Перегрузка метода для добавления записи изменений в файл
-    public void delTask(Integer num){
-        super.delTask(num);
-        save();
-    }
-
-    //Перегрузка метода для добавления записи изменений
-    public Task getTask(int num){
-        Task task = super.getTask(num);
-        save();
-        return task;
-    }
+    
     //Сохранение данных на сервер
-
     public void save() {
-        new GsonBuilder();
         JsonObject result = new JsonObject();
         result.add("tasks", gson.toJsonTree(getTasksList()));
         JsonArray hist = new JsonArray();
@@ -81,8 +52,7 @@ public class HTTPTasksManager extends FileBackedTasksManager {
 
     //Создание нового экземпляра менеджера на основе данных с сервера
     public void loadFromJson(String loadKey) {
-        KVTaskClient kvClient = new KVTaskClient("localhost");
-        HTTPTasksManager newManager = new HTTPTasksManager("url");
+//        HTTPTasksManager newManager = new HTTPTasksManager("url");
         new GsonBuilder();
         JsonElement mngElement = JsonParser.parseString(kvClient.load(loadKey));
         if(!mngElement.isJsonObject()) {    // проверяем, точно ли мы получили JSON-объект
@@ -96,15 +66,15 @@ public class HTTPTasksManager extends FileBackedTasksManager {
             String taskType = taskElement.getAsJsonObject().get("type").getAsString();
             switch(TaskType.valueOf(taskType)) {
                 case TASK:  //Загрузка обычных задач
-                    newManager.addTask(gson.fromJson(taskElement, Task.class));
+                    addTask(gson.fromJson(taskElement, Task.class));
                     break;
                 case EPIC:  //Загрузка эпиков с подзадачами
                     Epic epic = gson.fromJson(taskElement, Epic.class);
-                    newManager.addTask(epic);
+                    addTask(epic);
                     //Коррекция подзадач после десериализации
                     for(SubTask subTask : epic.getSubTasks()) {
                         subTask.setEpic(epic);                              //Восстановление обратной связи с эпиком
-                        newManager.taskList.put(subTask.getNum(), subTask); //Прописывание подзадачи в общем списке менеджера
+                        taskList.put(subTask.getNum(), subTask); //Прописывание подзадачи в общем списке менеджера
                     }
                     break;
                 default:
@@ -112,11 +82,11 @@ public class HTTPTasksManager extends FileBackedTasksManager {
             }
         }
 
-        newManager.refreshSortedSet();
+        refreshSortedSet();
         //Формирование истории нового менеджена задач
         JsonArray histJsonArray = mngJsonObj.getAsJsonArray("history");
         for (JsonElement histElement : histJsonArray){
-            newManager.getTask(histElement.getAsInt());
+            getTask(histElement.getAsInt());
         }
     }
 }

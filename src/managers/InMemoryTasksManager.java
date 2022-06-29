@@ -28,7 +28,7 @@ public class InMemoryTasksManager implements TaskManager {
     //Конструктор
     public InMemoryTasksManager() {
         taskList = new HashMap<>();
-        history = new InMemoryHistoryManager();
+        history = (InMemoryHistoryManager) Managers.getDefaultHistory();
     }
 
     //Получение списка всех задач (Эпики + Задачи + Подзадачи).

@@ -9,7 +9,7 @@ public class Main {
 
 
     public static void main(String[] args) {
-        TaskManager manager = Managers.getDefault(3);    //Получение менеджера задач
+        TaskManager manager = Managers.getDefault();    //Получение менеджера задач
         // 1 - InMemoryTasksManager
         // 2 - FileBackedTasksManager
         // 3 - HTTPTasksManager

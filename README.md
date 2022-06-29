@@ -1,2 +1,2 @@
-# Practicum-sprint7-master
+# Practicum-sprint7
 Sprint7
